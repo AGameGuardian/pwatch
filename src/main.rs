@@ -109,7 +109,8 @@ async fn main() -> anyhow::Result<()> {
     }
     let (res, _, _) = futures::future::select_all(maps.into_iter().map(|m| {
         tokio::spawn(async move {
-            let Err(e) = m.events(handle_event).await {
+            let result = m.events(handle_event).await;
+            if let Err(e) = result {
                 error!("error: {}", e);
             }
         })
