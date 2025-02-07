@@ -1,0 +1,40 @@
+name: Rust Build CI
+
+on: [ push,pull_request,workflow_dispatch ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        target: [ x86_64-unknown-linux-musl, aarch64-unknown-linux-musl ]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly
+          targets: ${{ matrix.target }}
+          components: rust-src
+
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: lld
+          version: 1.0
+
+      - name: Build Binary
+        run: |
+          cargo build --target ${{ matrix.target }} --release
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pwatch-${{ matrix.target }}
+          path: target/${{ matrix.target }}/release/pwatch
+          compression-level: 9
+
